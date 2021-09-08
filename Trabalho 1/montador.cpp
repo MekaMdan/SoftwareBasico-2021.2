@@ -77,7 +77,7 @@ public:
     void inserir_constante(std::string id, int endereco, int valor){
         int pos = achar_id(id);
         nodes[pos]->endereco = endereco;
-        nodes[pos]->tipo = 'constante';
+        nodes[pos]->tipo = "constante";
         nodes[pos]->valor = valor;
         nodes[pos]->declarada = true;
     }
@@ -86,7 +86,7 @@ public:
     void inserir_label(std::string id, int endereco){
         int pos = achar_id(id);
         nodes[pos]->endereco = endereco;
-        nodes[pos]->tipo = 'label';
+        nodes[pos]->tipo = "label";
         nodes[pos]->declarada = true;
         nodes[pos]->valor = 0;
     }
@@ -94,7 +94,7 @@ public:
     void inserir_variavel(std::string id, int endereco){
         int pos = achar_id(id);
         nodes[pos]->endereco = endereco;
-        nodes[pos]->tipo = 'variavel';
+        nodes[pos]->tipo = "variavel";
         nodes[pos]->declarada = true;
         nodes[pos]->valor = 0;
     }
@@ -148,7 +148,12 @@ int main(int argc, char* argv[]) {
         TabelaDeSimbolos TS; //Cria Tabela de simbolos
         std::ifstream Arquivo(argv[1]);
 
-
+        // Cria o nome do novo arquivo que será criado com o código objeto do programa
+        std::string nome = argv[1];
+        std::string toReplace(".asm");
+        size_t pos = nome.find(toReplace);
+        nome.replace(pos, toReplace.length(), ".obj");
+        // FIM DA CRIAÇÃO DO ARQUIVO OBJETO
 
         Arquivo.close();
         TS.~TabelaDeSimbolos(); // Desaloca vetor da tabela de simbolos
