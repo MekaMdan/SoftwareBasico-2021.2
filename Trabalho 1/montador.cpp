@@ -4,7 +4,7 @@
 #include <ctype.h>
 #include <list>
 #include <vector>
-
+#include <algorithm>
 
 // Classe nós que armazena os simbolos que serão inseridos na tabela de simbolos
 class Node{
@@ -140,6 +140,12 @@ int main(int argc, char* argv[]) {
     // ex: 00 Add N1 -> v[0] = 01 (codigo add) v[1] = endereço N1
     std::vector <int> obj;
     std::string linha;    
+    // vetor com todas as instruções validas. OPCODE = posição no vetor + 1|| pos(STOP) == 13 || pos(COPY) == 8
+    std::vector<std::string> instrucoes = {"ADD","SUB","MUL","DIV","JMP","JMPN",
+                                               "JNPP","JMPZ","COPY","LOAD","STORE",
+                                               "INPUT","OUTPUT","STOP"};
+                        
+    std::vector<std::string> diretivas = {"SECTION DATA","SECTION TEXT","CONST","SPACE"};
     //int atual = 0, end = 0;
 
     if(argc<2){
@@ -147,22 +153,22 @@ int main(int argc, char* argv[]) {
     }else{
         TabelaDeSimbolos TS; //Cria Tabela de simbolos
         std::ifstream Arquivo(argv[1]);
-
+        while (getline (Arquivo, linha)) {
+            for (auto & c: linha) c = toupper(c);
+            printf("%s\n",linha.c_str());
+        }
         // Cria o nome do novo arquivo que será criado com o código objeto do programa
         std::string nome = argv[1];
         std::string toReplace(".asm");
         size_t pos = nome.find(toReplace);
         nome.replace(pos, toReplace.length(), ".obj");
-        // FIM DA CRIAÇÃO DO ARQUIVO OBJETO
+        // FIM DA CRIAÇÃO DO NOME DO ARQUIVO OBJETO
 
         Arquivo.close();
         TS.~TabelaDeSimbolos(); // Desaloca vetor da tabela de simbolos
         //printf("%s\n",argv[1]);
         //std::ifstream Arquivo(argv[1]);
-        //while (getline (Arquivo, linha)) {
-        //    toupper(linha);
-        //    printf("%s\n",linha.c_str());
-        //}
+        //
         //Arquivo.close();
         // Le o arquivo com o nome no argv[2] 
     }
