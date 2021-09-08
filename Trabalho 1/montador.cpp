@@ -5,6 +5,7 @@
 #include <list>
 #include <vector>
 #include <algorithm>
+#include <sstream>
 
 // Classe nós que armazena os simbolos que serão inseridos na tabela de simbolos
 class Node{
@@ -132,6 +133,46 @@ public:
     }
 };
 
+
+void Printa(std::vector<std::string> v){
+    int t = v.size();
+    if(t<1){
+        printf("Vazio\n");
+    }else{
+        for(int i=0;i<t;++i)
+		std::cout<<v[i]<<std::endl;
+    }
+    
+}
+
+void SeparaString(std::vector<std::string> &v, std::string s){
+    bool anterior = false;
+    std::string word;
+    for (auto x: s){
+        if((x == ' ')){
+            if(anterior==false){
+                anterior = true;
+                v.push_back(word);
+                word = "";
+            }
+        }else{
+            if(anterior==true){
+                anterior = false;
+            }
+            word = word + x;
+        }
+    }
+    if(word!=""){
+        v.push_back(word);
+    }
+}
+
+void EsvaziaVetor(std::vector<std::string> &v){
+    while(!v.empty()){
+        v.pop_back();
+    }
+}
+
 // Recebe argc e argc (padrão para receber entrada pela linha de comando)
 // argc: Contador de entradas
 // argv: Vetor de entradas
@@ -148,14 +189,23 @@ int main(int argc, char* argv[]) {
     std::vector<std::string> diretivas = {"SECTION DATA","SECTION TEXT","CONST","SPACE"};
     //int atual = 0, end = 0;
 
+    std::string caracteres = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_";
+
     if(argc<2){
+        // Caso não passe nenhum nome de arquivo
         printf("fatal error: no input files\nmontador terminated.");
     }else{
         TabelaDeSimbolos TS; //Cria Tabela de simbolos
         std::ifstream Arquivo(argv[1]);
+        std::vector<std::string> vetorLinha;
+        bool erro = false; // Desabilita a criação de arquivos objeto caso tenha erros
+        int secao; // Recebe -1 caso seção não seja lida, 1 se for dados, e 0 se for text
+        
+        // Leitura do arquivo
         while (getline (Arquivo, linha)) {
             for (auto & c: linha) c = toupper(c);
-            printf("%s\n",linha.c_str());
+            SeparaString(vetorLinha, linha);
+            EsvaziaVetor(vetorLinha);
         }
         // Cria o nome do novo arquivo que será criado com o código objeto do programa
         std::string nome = argv[1];
@@ -166,11 +216,6 @@ int main(int argc, char* argv[]) {
 
         Arquivo.close();
         TS.~TabelaDeSimbolos(); // Desaloca vetor da tabela de simbolos
-        //printf("%s\n",argv[1]);
-        //std::ifstream Arquivo(argv[1]);
-        //
-        //Arquivo.close();
-        // Le o arquivo com o nome no argv[2] 
     }
     
     return 0;
