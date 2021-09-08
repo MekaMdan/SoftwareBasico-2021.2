@@ -198,6 +198,10 @@ int main(int argc, char* argv[]) {
         TabelaDeSimbolos TS; //Cria Tabela de simbolos
         std::ifstream Arquivo(argv[1]);
         std::vector<std::string> vetorLinha;
+        bool erro = false; // Desabilita a criação de arquivos objeto caso tenha erros
+        int secao; // Recebe -1 caso seção não seja lida, 1 se for dados, e 0 se for text
+        
+        // Leitura do arquivo
         while (getline (Arquivo, linha)) {
             for (auto & c: linha) c = toupper(c);
             SeparaString(vetorLinha, linha);
@@ -209,13 +213,6 @@ int main(int argc, char* argv[]) {
         size_t pos = nome.find(toReplace);
         nome.replace(pos, toReplace.length(), ".obj");
         // FIM DA CRIAÇÃO DO NOME DO ARQUIVO OBJETO
-
-        // std::string s = "   Hello! My name     is John       Smith."; 
-        // std::vector<std::string> result; 
-        // SeparaString(result, s);
-        // Printa(result);
-        // EsvaziaVetor(result);
-        // Printa(result);
 
         Arquivo.close();
         TS.~TabelaDeSimbolos(); // Desaloca vetor da tabela de simbolos
