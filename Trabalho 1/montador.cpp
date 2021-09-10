@@ -38,7 +38,6 @@ public:
     friend class TabelaDeSimbolos;
 };
 
-
 // Classe da Tabela de Simbolos
 class TabelaDeSimbolos{
     std::vector <Node*> nodes;
@@ -133,7 +132,6 @@ public:
     }
 };
 
-
 void Printa(std::vector<std::string> v){
     int t = v.size();
     if(t<1){
@@ -173,13 +171,25 @@ void EsvaziaVetor(std::vector<std::string> &v){
     }
 }
 
+void CriaVetorObjeto(std::vector<std::string> &v, int i){
+    std::string ins;
+    if (i<10){
+        ins = "0";
+        ins += std::to_string(i);
+    }else{
+        ins = "";
+        ins += std::to_string(i);
+    }
+    v.push_back(ins);
+}
+
 // Recebe argc e argc (padrão para receber entrada pela linha de comando)
 // argc: Contador de entradas
 // argv: Vetor de entradas
 int main(int argc, char* argv[]) {
     // Lista que irá armazenar o valor de cada linha de endereço do programa na posição correspondente do vetor
     // ex: 00 Add N1 -> v[0] = 01 (codigo add) v[1] = endereço N1
-    std::vector <int> obj;
+    std::vector <std::string> obj;
     std::string linha;    
     // vetor com todas as instruções validas. OPCODE = posição no vetor + 1|| pos(STOP) == 13 || pos(COPY) == 8
     std::vector<std::string> instrucoes = {"ADD","SUB","MUL","DIV","JMP","JMPN",
@@ -187,7 +197,8 @@ int main(int argc, char* argv[]) {
                                                "INPUT","OUTPUT","STOP"};
                         
     std::vector<std::string> diretivas = {"SECTION DATA","SECTION TEXT","CONST","SPACE"};
-    //int atual = 0, end = 0;
+    int atual = 0, endereco = 0; //linha do codigo, endereço da linha do codigo obj atual;
+    int tam, i; // tamanho do vetor
 
     std::string caracteres = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_";
 
@@ -199,13 +210,28 @@ int main(int argc, char* argv[]) {
         std::ifstream Arquivo(argv[1]);
         std::vector<std::string> vetorLinha;
         bool erro = false; // Desabilita a criação de arquivos objeto caso tenha erros
-        int secao; // Recebe -1 caso seção não seja lida, 1 se for dados, e 0 se for text
-        
+        int secao = -1; // Recebe -1 caso seção não seja lida, 1 se for dados, e 0 se for text
+        bool comentario;
+
         // Leitura do arquivo
         while (getline (Arquivo, linha)) {
             for (auto & c: linha) c = toupper(c);
             SeparaString(vetorLinha, linha);
+            atual++;
+            tam = vetorLinha.size();
+            for(i=0;i<tam;i++){
+                if(!comentario){
+                    if(vetorLinha[i]==";" || vetorLinha[i].front() == ';'){
+                        comentario = true;
+                        
+                    }else{
+                        
+                    }
+                }
+            }
+            printf("\n");
             EsvaziaVetor(vetorLinha);
+            comentario = false;
         }
         // Cria o nome do novo arquivo que será criado com o código objeto do programa
         std::string nome = argv[1];
