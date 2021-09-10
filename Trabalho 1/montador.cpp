@@ -183,6 +183,17 @@ void CriaVetorObjeto(std::vector<std::string> &v, int i){
     v.push_back(ins);
 }
 
+bool VerificaDiretiva(std::vector<std::string> v, std::string s){
+    int tam,i;
+    tam = v.size();
+    for(i=0;i<tam;i++){
+        if(v[i]==s){
+            return true;
+        }
+    }
+    return false;
+}
+
 // Recebe argc e argc (padrão para receber entrada pela linha de comando)
 // argc: Contador de entradas
 // argv: Vetor de entradas
@@ -196,9 +207,10 @@ int main(int argc, char* argv[]) {
                                                "JNPP","JMPZ","COPY","LOAD","STORE",
                                                "INPUT","OUTPUT","STOP"};
                         
-    std::vector<std::string> diretivas = {"SECTION DATA","SECTION TEXT","CONST","SPACE"};
-    int atual = 0, endereco = 0; //linha do codigo, endereço da linha do codigo obj atual;
-    int tam, i; // tamanho do vetor
+    std::vector<std::string> diretivas_arq = {"SECTION DATA","SECTION TEXT","CONST","SPACE"};
+    std::vector<std::string> diretivas_var = {"CONST","SPACE"};
+    int atual = 1, endereco = 0; //linha do codigo, endereço da linha do codigo obj atual;
+    int tam, i; // tamanho do vetor, variavel de iteração
 
     std::string caracteres = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_";
 
@@ -210,34 +222,52 @@ int main(int argc, char* argv[]) {
         std::ifstream Arquivo(argv[1]);
         std::vector<std::string> vetorLinha;
         bool erro = false; // Desabilita a criação de arquivos objeto caso tenha erros
-        int secao = -1; // Recebe -1 caso seção não seja lida, 1 se for dados, e 0 se for text
         bool comentario;
-
+        std::string direc = "";
         // Leitura do arquivo
         while (getline (Arquivo, linha)) {
             for (auto & c: linha) c = toupper(c);
             SeparaString(vetorLinha, linha);
-            atual++;
+            
             tam = vetorLinha.size();
+            
             for(i=0;i<tam;i++){
                 if(!comentario){
                     if(vetorLinha[i]==";" || vetorLinha[i].front() == ';'){
                         comentario = true;
-                        
                     }else{
+                        if(vetorLinha[i]=="SECTION"){
+                            direc = vetorLinha[i];
+                            direc += ' ';
+                        }else{
+                            if(direc!=""){
+                                direc+=vetorLinha[i];
+                            }
+                        }
                         
+
                     }
                 }
             }
-            printf("\n");
+            
+            if(direc!="")
+                if(!VerificaDiretiva(diretivas_arq,direc)){
+                    erro = true;
+                    printf("linha %d - erro lexico, diretiva invalida: %s \n", atual, direc.c_str());
+                }
+
+            direc = "";
             EsvaziaVetor(vetorLinha);
-            comentario = false;
+            comentario = false; // reseta variavel de comentario
+            atual++; 
         }
         // Cria o nome do novo arquivo que será criado com o código objeto do programa
-        std::string nome = argv[1];
-        std::string toReplace(".asm");
-        size_t pos = nome.find(toReplace);
-        nome.replace(pos, toReplace.length(), ".obj");
+        if(!erro){
+            std::string nome = argv[1];
+            std::string toReplace(".asm");
+            size_t pos = nome.find(toReplace);
+            nome.replace(pos, toReplace.length(), ".obj");
+        }  
         // FIM DA CRIAÇÃO DO NOME DO ARQUIVO OBJETO
 
         Arquivo.close();
