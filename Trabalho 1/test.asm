@@ -14,9 +14,9 @@ section rext
 input n1 ;oi
 input n2 ; a
 load n1
-2labela: 
+labela: 
 add n2
-2labela:
+labela:
 store n1
 output
 stop

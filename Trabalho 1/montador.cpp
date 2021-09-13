@@ -9,7 +9,6 @@
 #include <unordered_map>
 #include <stdio.h>
 
-
 // Classe nós que armazena os simbolos que serão inseridos na tabela de simbolos
 class Node{
     std::string simbolo;
