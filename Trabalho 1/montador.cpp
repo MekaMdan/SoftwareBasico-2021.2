@@ -1,11 +1,14 @@
 #include<iostream>
-#include<string>
+#include<string.h>
 #include <fstream>
 #include <ctype.h>
 #include <list>
 #include <vector>
 #include <algorithm>
 #include <sstream>
+#include <unordered_map>
+#include <stdio.h>
+
 
 // Classe nós que armazena os simbolos que serão inseridos na tabela de simbolos
 class Node{
@@ -14,6 +17,7 @@ class Node{
     std::list <int> pendencia;
     std::string tipo; // Variavel ou label
     bool declarada;
+    int pos_declaração;
     int valor;
     // Node* next;
 public:
@@ -74,11 +78,17 @@ public:
         return -1;
     }
 
-    void inserir_constante(std::string id, int endereco, int valor){
+    void modifica_end(std::string id, int endereco){
+        int pos = achar_id(id);
+        nodes[pos]->endereco = endereco;
+    }
+
+    void inserir_constante(std::string id, int endereco, int valor, int posi){
         int pos = achar_id(id);
         nodes[pos]->endereco = endereco;
         nodes[pos]->tipo = "constante";
         nodes[pos]->valor = valor;
+        nodes[pos]->pos_declaração = posi;
         nodes[pos]->declarada = true;
     }
 
@@ -91,11 +101,12 @@ public:
         nodes[pos]->valor = 0;
     }
 
-    void inserir_variavel(std::string id, int endereco){
+    void inserir_variavel(std::string id, int endereco, int posi){
         int pos = achar_id(id);
         nodes[pos]->endereco = endereco;
         nodes[pos]->tipo = "variavel";
         nodes[pos]->declarada = true;
+        nodes[pos]->pos_declaração = posi;
         nodes[pos]->valor = 0;
     }
     
@@ -134,13 +145,21 @@ public:
 
 void Printa(std::vector<std::string> v){
     int t = v.size();
-    if(t<1){
-        printf("Vazio\n");
-    }else{
-        for(int i=0;i<t;++i)
-		std::cout<<v[i]<<std::endl;
+    if(t>=1){
+        for(int i=0;i<t;++i){
+		    printf("%s ", v[i].c_str());
+        }
+        printf("\n");    
     }
     
+}
+
+void PrintaErro(std::vector<std::string> v){
+    int t = v.size();
+    if(t>=1){
+        for(int i=0;i<t;++i)
+            printf("%s \n", v[i].c_str());
+    }
 }
 
 void SeparaString(std::vector<std::string> &v, std::string s){
@@ -194,6 +213,31 @@ bool VerificaDiretiva(std::vector<std::string> v, std::string s){
     return false;
 }
 
+bool ContemErr(std::vector<std::string> v, std::string s){
+    int t = v.size();
+    if(t>0){
+        for(int i=0;i<t;i++){
+            if(v[i]==s){
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool HasSpecialCharacters(const char *str)
+{
+    return str[strspn(str, "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")] != 0;
+}
+
+// Se a var/label possui apenas tokens aceitos, retorna true
+bool VerificaTokens(std::string s){
+    if((!isdigit(s.front()))&&(!HasSpecialCharacters(s.c_str()))){
+        return true;
+    }
+    return false;
+}
+
 // Recebe argc e argc (padrão para receber entrada pela linha de comando)
 // argc: Contador de entradas
 // argv: Vetor de entradas
@@ -202,12 +246,11 @@ int main(int argc, char* argv[]) {
     // ex: 00 Add N1 -> v[0] = 01 (codigo add) v[1] = endereço N1
     std::vector <std::string> obj;
     std::string linha;    
-    // vetor com todas as instruções validas. OPCODE = posição no vetor + 1|| pos(STOP) == 13 || pos(COPY) == 8
-    std::vector<std::string> instrucoes = {"ADD","SUB","MUL","DIV","JMP","JMPN",
-                                               "JNPP","JMPZ","COPY","LOAD","STORE",
-                                               "INPUT","OUTPUT","STOP"};
-                        
-    std::vector<std::string> diretivas_arq = {"SECTION DATA","SECTION TEXT","CONST","SPACE"};
+    // MAPA COM INSTRUÇÕES E VETOR QUE CONTEM OP CODE DA INSTRUÇÃO E NUMERO DE ENDEREÇO OCUPADOS
+    std::unordered_map <std::string, std::vector<int> > inst = {{"ADD",{1,2}},{"SUB",{2,2}},{"MUL",{3,2}}, {"DIV",{4,2}}, 
+    {"JMP",{5,2}},{"JMPN",{6,2}},{"JNPP",{7,2}},{"JMPZ",{8,2}}, {"COPY",{9,3}},{"LOAD",{10,2}},{"STORE",{11,2}},{"INPUT",{12,2}},
+    {"OUTPUT",{13,2}},{"STOP",{14,1}}};             
+    std::vector<std::string> diretivas_sec = {"SECTION DATA","SECTION TEXT"};
     std::vector<std::string> diretivas_var = {"CONST","SPACE"};
     int atual = 1, endereco = 0; //linha do codigo, endereço da linha do codigo obj atual;
     int tam, i; // tamanho do vetor, variavel de iteração
@@ -223,7 +266,13 @@ int main(int argc, char* argv[]) {
         std::vector<std::string> vetorLinha;
         bool erro = false; // Desabilita a criação de arquivos objeto caso tenha erros
         bool comentario;
+        bool data = false;
+        std::string comando = "";
+        bool com_atual = false;
         std::string direc = "";
+        std::vector<std::string> erros_linha;
+        std::string err_linhastr;
+
         // Leitura do arquivo
         while (getline (Arquivo, linha)) {
             for (auto & c: linha) c = toupper(c);
@@ -231,32 +280,77 @@ int main(int argc, char* argv[]) {
             
             tam = vetorLinha.size();
             
+            // separa os comentarios do código
             for(i=0;i<tam;i++){
+                // Verifica se o que foi lido é comentario
                 if(!comentario){
-                    if(vetorLinha[i]==";" || vetorLinha[i].front() == ';'){
+                    if(vetorLinha[i]==";" || vetorLinha[i].front() == ';'){ 
                         comentario = true;
+                        vetorLinha.erase(vetorLinha.begin() + i);
                     }else{
-                        if(vetorLinha[i]=="SECTION"){
-                            direc = vetorLinha[i];
-                            direc += ' ';
-                        }else{
-                            if(direc!=""){
-                                direc+=vetorLinha[i];
+                        if((vetorLinha[i].back() == ':' || vetorLinha[i]== ":" )&&(comando!="var")){
+                            
+                            // Se for na forma ROTULO: , remove os : para ter o rotulo
+                            if(vetorLinha[i].back() == ':'){
+                                vetorLinha[i].pop_back();
+                                direc = vetorLinha[i]; // dirac recebe valor de variavel ou de label
+                                vetorLinha[i].push_back(':'); 
                             }
-                        }
-                        
+                                
 
+                            if(data == false){ // ser for label
+                                if(comando == "label"){
+                                        err_linhastr = "Linha ";
+                                        err_linhastr += std::to_string(atual);
+                                        err_linhastr += " - Erro Sintatico: dois ou mais rotulos na mesma linha";
+                                        if(!ContemErr(erros_linha, err_linhastr))
+                                            erros_linha.push_back(err_linhastr);
+                                        err_linhastr = "";
+                                    }else{
+                                        comando = "label";
+                                        if(TS.verifica_id(direc)){
+                                            err_linhastr = "Linha ";
+                                            err_linhastr += std::to_string(atual);
+                                            err_linhastr += " - Erro Semantico: declaração de rotulos repetidos";
+                                            if(!ContemErr(erros_linha, err_linhastr))
+                                                erros_linha.push_back(err_linhastr);
+                                            err_linhastr = "";
+                                        }else{
+                                            if(VerificaTokens(direc)){
+                                                TS.inserir(direc);
+                                            }else{
+                                                err_linhastr = "Linha ";
+                                                err_linhastr += std::to_string(atual);
+                                                err_linhastr += " - Erro Lexico: Tokens invalidos";
+                                                if(!ContemErr(erros_linha, err_linhastr))
+                                                    erros_linha.push_back(err_linhastr);
+                                                err_linhastr = "";
+                                            }
+                                        }
+                                    }
+                            }else{  // se for declaração de var ou const
+                                
+                                    
+                                    
+                            }
+                        }else{
+                            
+                        }
                     }
+
+                }else{ // se for comentario
+                    vetorLinha.erase(vetorLinha.begin() + i);
                 }
             }
-            
-            if(direc!="")
-                if(!VerificaDiretiva(diretivas_arq,direc)){
+            if(erros_linha.size()>0){
+                Printa(vetorLinha);
+                PrintaErro(erros_linha);
+                EsvaziaVetor(erros_linha);
+                if(!erro){
                     erro = true;
-                    printf("linha %d - erro lexico, diretiva invalida: %s \n", atual, direc.c_str());
                 }
-
-            direc = "";
+            }
+            com_atual = false;
             EsvaziaVetor(vetorLinha);
             comentario = false; // reseta variavel de comentario
             atual++; 
@@ -269,7 +363,7 @@ int main(int argc, char* argv[]) {
             nome.replace(pos, toReplace.length(), ".obj");
         }  
         // FIM DA CRIAÇÃO DO NOME DO ARQUIVO OBJETO
-
+        
         Arquivo.close();
         TS.~TabelaDeSimbolos(); // Desaloca vetor da tabela de simbolos
     }
