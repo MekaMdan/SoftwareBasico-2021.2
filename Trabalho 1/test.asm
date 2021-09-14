@@ -9,8 +9,11 @@
 ; section data
 ; um: const 1
 ; res: space
-
-section rext
+SECTION DATA
+n1: space
+n2: space 
+LABEL: INST SAD
+SECTION text
 input n1 ;oi
 input n2 ; a
 load n1
@@ -21,10 +24,7 @@ store n1
 score
 output
 stop
-section data
-n1: space
-n2: space 
-LABEL: INST SAD
+
 ;if(vetorLinha[i]=="SECTION"){
 ;                            direc = vetorLinha[i];
 ;                            direc += ' ';
