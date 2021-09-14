@@ -176,6 +176,16 @@ public:
         return -1;
     }
 
+    int RetornaIdPorPos(int p){
+        int tam = nodes.size();
+        for(int i=0; i<tam; i++){
+            if(nodes[i]->pos_declaração == p){
+                return i;
+            }
+        }
+        return -1;
+    }
+
     void removeLista(){
         std::vector<Node*>::size_type tam = nodes.size();
         for(unsigned i=0;i<tam;i++){
@@ -324,6 +334,27 @@ bool HasSpecialCharacters(const char *str)
     return str[strspn(str, "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")] != 0;
 }
 
+void InsereDecl(std::vector <int> &v, int p, TabelaDeSimbolos R){
+    int valor,i;
+    for(i=0;i<p;i++){
+        valor = R.retornVarById(R.RetornaIdPorPos(i));
+        v.push_back(valor);
+    }
+}
+
+void ResolvePendencias(std::vector <int> &v,TabelaDeSimbolos R){
+    int tam = R.retornTam();
+    int i, pend,end;
+    for(i=0;i<tam;i++){
+        pend = R.retornaPendencia(i);
+        end = R.retornEndById(i);
+        while(pend!=-1){
+            v[pend]=end;
+            pend = R.retornaPendencia(i);
+        }
+    }
+}
+
 // Se a var/label possui apenas tokens aceitos, retorna true
 bool VerificaTokens(std::string s){
     if((!isdigit(s.front()))&&(!HasSpecialCharacters(s.c_str()))){
@@ -464,7 +495,7 @@ int main(int argc, char* argv[]) {
                                                 }
                                                 TS.inserir_label(direc, text);
                                                 endereco++;
-                                                printf("end label: %d\n", endereco);
+
                                             }else{
                                                 err_linhastr = "Linha ";
                                                 err_linhastr += std::to_string(atual);
@@ -484,7 +515,7 @@ int main(int argc, char* argv[]) {
                                 if((inst.find(vetorLinha[i]) != inst.end())&&(comando!="invalido")){
                                     comando = "var";
                                     endereco = text+1;
-                                    printf("inst end: %d\n", endereco);
+                                    
                                     n_var = inst[vetorLinha[i]][1]; // numero total de variaveis
                                     text +=n_var;
                                     
@@ -506,7 +537,6 @@ int main(int argc, char* argv[]) {
                                                         TS.inserir(direc);
                                                     }
                                                     TS.adicionar_lista(direc, endereco);
-                                                    printf("list end: %d\n", endereco);
                                                     obj.push_back(-1);
                                                     endereco++;
                                                     n_var--;
@@ -519,7 +549,7 @@ int main(int argc, char* argv[]) {
                                                         TS.inserir(direc);
                                                     }
                                                     TS.adicionar_lista(direc, endereco);
-                                                    printf("list end: %d\n", endereco);
+
                                                     obj.push_back(-1);
                                                     endereco++;
                                                     n_var--;
@@ -539,7 +569,7 @@ int main(int argc, char* argv[]) {
                                                         }
                                                         TS.adicionar_lista(direc, endereco);
                                                         obj.push_back(-1);
-                                                        printf("list end: %d\n", endereco);
+
                                                         endereco++;
                                                         
                                                     }
@@ -712,14 +742,14 @@ int main(int argc, char* argv[]) {
                     if(!TS.verifica_id(direc)){
                         TS.inserir(direc);
                     }
-                    if(TS.retorna_endereço(direc)!= -1){
+                    if((TS.retorna_endereço(direc)> 0)&&(TS.verifica_id_decl(direc))){
                         obj.push_back(TS.retorna_endereço(direc));
                     }else{
                         TS.adicionar_lista(direc, endereco);
                         obj.push_back(-1);
                     }
                     endereco++;
-                    printf("list end: %d\n", endereco);
+
                     
                     
                 }
@@ -781,9 +811,18 @@ int main(int argc, char* argv[]) {
             
         }
 
+        TS.Mostra();
+
         if(text>data_end){
             TS.altera_end(text);
         }
+
+        // Resolve Pendencias
+        ResolvePendencias(obj,TS);
+        // Insere variaveis no vetor objeto
+        InsereDecl(obj,pos,TS);
+        // Achar Variaveis não declaradas
+
 
         // Cria o nome do novo arquivo que será criado com o código objeto do programa
         if(!erro){
@@ -795,7 +834,7 @@ int main(int argc, char* argv[]) {
         //printf("text: %d, data: %d\n", text, data_end);
         
     
-        printf("%d\n", obj[1]);
+        
         
         // FIM DA CRIAÇÃO DO NOME DO ARQUIVO OBJETO
         PrintaOBJ(obj);

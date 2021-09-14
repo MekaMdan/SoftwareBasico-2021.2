@@ -16,8 +16,7 @@ input n2 ; a
 load n1 
 add n2
 store n1
-score
-output
+output n1
 stop
 SECTION DATA
 n1: space
