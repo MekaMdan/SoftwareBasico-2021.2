@@ -196,8 +196,8 @@ public:
         std::list <int>::iterator it = nodes[i]->pendencia.begin();
         int j;
         for(j=0;j<tam;j++){
-            std::advance(it,1);
             printf("%d-> %d ",j+1, *it);
+            std::advance(it,1);
         }
         if(tam>0){
            printf("\n"); 
@@ -463,6 +463,8 @@ int main(int argc, char* argv[]) {
                                                     TS.inserir(direc);
                                                 }
                                                 TS.inserir_label(direc, text);
+                                                endereco++;
+                                                printf("end label: %d\n", endereco);
                                             }else{
                                                 err_linhastr = "Linha ";
                                                 err_linhastr += std::to_string(atual);
@@ -478,13 +480,14 @@ int main(int argc, char* argv[]) {
                                 comando = "decl";
                                 var = direc;
                             }
-                            endereco++;
                         }else{
                                 if((inst.find(vetorLinha[i]) != inst.end())&&(comando!="invalido")){
                                     comando = "var";
+                                    endereco = text+1;
+                                    printf("inst end: %d\n", endereco);
                                     n_var = inst[vetorLinha[i]][1]; // numero total de variaveis
                                     text +=n_var;
-                                    endereco++;
+                                    
                                     obj.push_back(inst[vetorLinha[i]][0]); // Carrega no fim do vetor de codigo objeto o codigo da instrução
                                     if(vetorLinha[i]=="STOP"){
                                         stop = true;
@@ -503,9 +506,10 @@ int main(int argc, char* argv[]) {
                                                         TS.inserir(direc);
                                                     }
                                                     TS.adicionar_lista(direc, endereco);
+                                                    printf("list end: %d\n", endereco);
                                                     obj.push_back(-1);
                                                     endereco++;
-                                                    
+                                                    n_var--;
                                                     // insere direc na tb e/ou insere na lista de pendencia
                                                 }else{  //senao é na forma [rotulo,]
                                                     // insere vetorLinha[i] no direc, remove o ultimo elemento do direc(seria a virgula)
@@ -515,9 +519,10 @@ int main(int argc, char* argv[]) {
                                                         TS.inserir(direc);
                                                     }
                                                     TS.adicionar_lista(direc, endereco);
+                                                    printf("list end: %d\n", endereco);
                                                     obj.push_back(-1);
                                                     endereco++;
-                                                    
+                                                    n_var--;
                                                     // insere direc na tb e/ou insere na lista de pendencia
                                                 }
                                             }else{
@@ -534,7 +539,9 @@ int main(int argc, char* argv[]) {
                                                         }
                                                         TS.adicionar_lista(direc, endereco);
                                                         obj.push_back(-1);
+                                                        printf("list end: %d\n", endereco);
                                                         endereco++;
+                                                        
                                                     }
                                                     EsvaziaVetor(hel);
                                                     direc = hel[tm];
@@ -705,9 +712,15 @@ int main(int argc, char* argv[]) {
                     if(!TS.verifica_id(direc)){
                         TS.inserir(direc);
                     }
-                    TS.adicionar_lista(direc, endereco);
-                    obj.push_back(-1);
+                    if(TS.retorna_endereço(direc)!= -1){
+                        obj.push_back(TS.retorna_endereço(direc));
+                    }else{
+                        TS.adicionar_lista(direc, endereco);
+                        obj.push_back(-1);
+                    }
                     endereco++;
+                    printf("list end: %d\n", endereco);
+                    
                     
                 }
             }
