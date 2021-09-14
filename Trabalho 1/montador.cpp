@@ -90,11 +90,6 @@ public:
         return -1;
     }
 
-    void modifica_end(std::string id, int endereco){
-        int pos = achar_id(id);
-        nodes[pos]->endereco = endereco;
-    }
-
     void inserir_constante(std::string id, int endereco, int valor, int posi){
         int pos = achar_id(id);
         nodes[pos]->endereco = endereco;
@@ -104,6 +99,26 @@ public:
         nodes[pos]->declarada = true;
     }
 
+    void altera_end(int text){
+        int tam = nodes.size();
+        int i,p;
+        for (i=0;i<tam;i++){
+            if(nodes[i]->endereco==-1){
+                p = nodes[i]->pos_declaração;
+                nodes[i]->endereco = text+p;
+            }
+        }
+    }
+
+    int retorna_valor(std::string id){
+        int i = achar_id(id);
+        return nodes[i]->valor;
+    }
+
+    int retorna_endereço(std::string id){
+        int i = achar_id(id);
+        return nodes[i]->endereco;
+    }
 
     void inserir_label(std::string id, int endereco){
         int pos = achar_id(id);
@@ -144,9 +159,7 @@ public:
     void removeLista(){
         std::vector<Node*>::size_type tam = nodes.size();
         for(unsigned i=0;i<tam;i++){
-            while(!nodes[i]->pendencia.empty()){
-                nodes[i]->pendencia.pop_back();
-            }
+            nodes[i]->pendencia.clear();
         }
     }
 
@@ -160,9 +173,7 @@ public:
 
     ~TabelaDeSimbolos(){
         removeLista();
-        if (!nodes.empty()){
-            nodes.pop_back();
-        }
+        nodes.clear();
     }
 };
 
@@ -210,6 +221,21 @@ void SeparaString(std::vector<std::string> &v, std::string s){
             if(anterior==true){
                 anterior = false;
             }
+            word = word + x;
+        }
+    }
+    if(word!=""){
+        v.push_back(word);
+    }
+}
+
+void SeparaVar(std::vector<std::string>&v, std::string s){
+    std::string word;
+    for(auto x:s){
+        if(x==','){
+            v.push_back(word);
+            word = "";
+        }else{
             word = word + x;
         }
     }
@@ -272,6 +298,21 @@ bool VerificaTokens(std::string s){
     return false;
 }
 
+bool ChecaComma(std::string s){
+    char valor = ',';
+    if(strchr(s.c_str(),valor)!=NULL){
+        return true;
+    }
+    return false;
+}
+
+bool ChecaMais(std::string s){
+    char valor = '+';
+    if(strchr(s.c_str(),valor)!=NULL){
+        return true;
+    }
+    return false;
+}
   
 // Recebe argc e argc (padrão para receber entrada pela linha de comando)
 // argc: Contador de entradas
@@ -321,11 +362,12 @@ int main(int argc, char* argv[]) {
         std::string direc = "";  // guarda valor de diretiva ou rotulo
         std::string tipo = "";  // guarda valor de diretiva ou rotulo
         std::string var = "";  // guarda valor de diretiva ou rotulo
+        std::string aux;
         int n_var; // Recebe o numero de variaveis pela instrução
         int text = -1;
         int data_end = -1;
         bool stop = false;
-        int pos = 1;
+        int pos = 0;
         // vetor de erros e string que irá receber erro
         std::vector<std::string> erros_linha;
         std::string err_linhastr;
@@ -417,9 +459,39 @@ int main(int argc, char* argv[]) {
                                 }else{
                                     if(comando=="var"){
                                         if(n_var>0){
-                                            //printf("DIRETIVA: %s\n",direc.c_str());
-                                            // printf("b %s\n",vetorLinha[i].c_str());
-
+                                            if((vetorLinha[i].back()==',')){
+                                                if(vetorLinha[i]==","){ // se vetorLinha[i] for apenas ,
+                                                    // direc já é a variavel
+                                                    // insere direc na tb e/ou insere na lista de pendencia
+                                                }else{  //senao é na forma [rotulo,]
+                                                    // insere vetorLinha[i] no direc, remove o ultimo elemento do direc(seria a virgula)
+                                                    direc += vetorLinha[i];
+                                                    direc.pop_back();
+                                                    // insere direc na tb e/ou insere na lista de pendencia
+                                                }
+                                            }else{
+                                                if(ChecaComma(vetorLinha[i])){ // se tiver , no meio da string
+                                                    // Se tem virgula no vetor, separa por virgula e retorna vetor  
+                                                }else{
+                                                    if((vetorLinha[i].back()=='+')){ 
+                                                        // adiciona + no direc
+                                                        direc += vetorLinha[i];
+                                                    }else{
+                                                        if(ChecaMais(vetorLinha[i])){
+                                                            direc += vetorLinha[i];
+                                                        }else{
+                                                            direc+=vetorLinha[i];
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            
+                                                
+                                            
+                                            printf("linha: %d ",atual);
+                                            printf("b %s\n",vetorLinha[i].c_str());
+                                            
+                                            
                                         }
                                     }else{
                                         if(((text == -1)&&(comando!= "decl"))||((stop==true)&&(data_end == -1))){
@@ -437,6 +509,37 @@ int main(int argc, char* argv[]) {
                                                         if(VerificaDiretiva(diretivas_var,vetorLinha[i])){
                                                             if(vetorLinha[i]=="SPACE"){
                                                                 tipo = "SPACE";
+                                                                if(TS.verifica_id_decl(var)){
+                                                                    err_linhastr = "Linha ";
+                                                                    err_linhastr += std::to_string(atual);
+                                                                    err_linhastr += " - Erro Semantico: declaracao de rotulos repetidos";
+                                                                    if(!ContemErr(erros_linha, err_linhastr))
+                                                                        erros_linha.push_back(err_linhastr);
+                                                                    err_linhastr = "";
+                                                                }else{
+                                                                    if(var.back()==' ')
+                                                                        var.pop_back();
+                                                                    if(VerificaTokens(var)){
+                                                                        if(!TS.verifica_id(var)){
+                                                                            TS.inserir(var);
+                                                                        }
+                                                                    
+                                                                        if(text<0){
+                                                                            TS.inserir_variavel(var,-1,pos); 
+                                                                        }else{
+                                                                            TS.inserir_variavel(var,text+pos,pos); 
+                                                                        }
+                                                                        pos++;
+                                                                    }else{
+                                                                        err_linhastr = "Linha ";
+                                                                        err_linhastr += std::to_string(atual);
+                                                                        err_linhastr += " - Erro Lexico: Tokens invalidos";
+                                                                        if(!ContemErr(erros_linha, err_linhastr))
+                                                                            erros_linha.push_back(err_linhastr);
+                                                                        err_linhastr = "";
+                                                                    }
+                                                                }
+                                                            
                                                             }else{
                                                                 tipo = "CONST";
                                                             }
@@ -469,9 +572,9 @@ int main(int argc, char* argv[]) {
                                                                     }
                                                                     
                                                                     if(text<0){
-                                                                       TS.inserir_constante(var,0,d,pos); 
+                                                                       TS.inserir_constante(var,-1,d,pos); 
                                                                     }else{
-                                                                        TS.inserir_constante(var,text,d,pos); 
+                                                                        TS.inserir_constante(var,text+pos,d,pos); 
                                                                     }
                                                                     pos++;
                                                                     
@@ -487,19 +590,35 @@ int main(int argc, char* argv[]) {
                                                             
                                                         }else{
                                                             
-                                                            printf("r: %s\n", var.c_str());
                                                             int d = std::stoi(vetorLinha[i]);
-                                                            int f = 0;
-
-                                                            for(f=1;f<d;f++){}
+                                                            int f;
+                                                            
+                                                            for(f=1;f<d;f++){
+                                                                aux = var;
+                                                                aux += "+";
+                                                                aux += std::to_string(f);
+                                                                
+                                                                    if(!TS.verifica_id(aux)){
+                                                                        TS.inserir(aux);
+                                                                    }
+                                                                    
+                                                                    if(text<0){
+                                                                        TS.inserir_variavel(aux,-1,pos); 
+                                                                    }else{
+                                                                        TS.inserir_variavel(aux,text+pos,pos); 
+                                                                    }
+                                                                    pos++;
+                                                                
+                                                            }
                                                             
                                                         }
                                                     }
-                                                }else{
+                                                }
+                                            }else{
                                                     direc=vetorLinha[i];
                                                     comando = "naoidentificado";
-                                                }
-                                            }
+                                                    }
+
                                             
                                         }
                                     }
@@ -513,10 +632,12 @@ int main(int argc, char* argv[]) {
                 }else{ // se for comentario
                     vetorLinha.erase(vetorLinha.begin() + i);
                 }
+                
             }
 
             if(comando=="var"){
                 comando = "inst";
+                printf("ARGUMENTOS: %s!\n",direc.c_str());
             }
 
             if(comando == "decl"){
@@ -572,6 +693,11 @@ int main(int argc, char* argv[]) {
             comentario = false; // reseta variavel de comentario
             atual++; 
         }
+
+        if(text>data_end){
+            TS.altera_end(text);
+        }
+
         // Cria o nome do novo arquivo que será criado com o código objeto do programa
         if(!erro){
             std::string nome = argv[1];
@@ -579,13 +705,17 @@ int main(int argc, char* argv[]) {
             size_t pos = nome.find(toReplace);
             nome.replace(pos, toReplace.length(), ".obj");
         }  
-        printf("text: %d, data: %d\n", text, data_end);
+        //printf("text: %d, data: %d\n", text, data_end);
+        
+    
+        SeparaVar(test,"abacate,banana,mamao");
         
         // FIM DA CRIAÇÃO DO NOME DO ARQUIVO OBJETO
         PrintaOBJ(obj);
         Arquivo.close();
         TS.Mostra();
-        TS.~TabelaDeSimbolos(); // Desaloca vetor da tabela de simbolos
+        TS.~TabelaDeSimbolos();
+         // Desaloca vetor da tabela de simbolos
     }
     
     return 0;
