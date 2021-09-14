@@ -708,7 +708,7 @@ int main(int argc, char* argv[]) {
         //printf("text: %d, data: %d\n", text, data_end);
         
     
-        SeparaVar(test,"abacate,banana,mamao");
+        
         
         // FIM DA CRIAÇÃO DO NOME DO ARQUIVO OBJETO
         PrintaOBJ(obj);
