@@ -422,7 +422,7 @@ int main(int argc, char* argv[]) {
         {"DIV",{4,2}}, 
         {"JMP",{5,2}},
         {"JMPN",{6,2}},
-        {"JNPP",{7,2}},
+        {"JMPP",{7,2}},
         {"JMPZ",{8,2}},
         {"COPY",{9,3}},
         {"LOAD",{10,2}},
@@ -932,6 +932,7 @@ int main(int argc, char* argv[]) {
         
         
         // FIM DA CRIAÇÃO DO NOME DO ARQUIVO OBJETO
+        
         Arquivo.close();
         TS.~TabelaDeSimbolos();
          // Desaloca vetor da tabela de simbolos

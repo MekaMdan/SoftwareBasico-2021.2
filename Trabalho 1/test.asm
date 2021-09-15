@@ -15,11 +15,14 @@ input n1 ;oi
 input n2 ; a
 load n1 
 add n2
-store n1 
+store n1
+copy n1,n2 
 output n1
+output n2
 stop
+
 SECTION DATA
-n1: space
+n1: space 
 n2: space 
 ;if(vetorLinha[i]=="SECTION"){
 ;                            direc = vetorLinha[i];
