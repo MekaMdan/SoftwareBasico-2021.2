@@ -109,12 +109,18 @@ void Execucao(std::string nome){
     std::string linha;
     std::vector  <int> v;
     getline(Arquivo,linha);
-    VetorInstrucao(v, linha); 
-    int acc = 0;
+    VetorInstrucao(v, linha);
+    int acc = v.size();
+    bool fim = false;
+    if(acc<=0){
+        fim = true;
+    }
+    acc = 0;
     int arg1, arg2;
     int pc = 0;
     int op;
-    bool fim = false;
+    
+    
     while(!fim){
         printf("\n*********************\n");
         printf("ACC = %d\n",acc);
