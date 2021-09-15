@@ -186,7 +186,7 @@ void Execucao(std::string nome){
     
 }
 
-// Recebe argc e argc (padrão para receber entrada pela linha de comando)
+// Recebe argc e argc (padrao para receber entrada pela linha de comando)
 // argc: Contador de entradas
 // argv: Vetor de entradas
 int main(int argc, char* argv[]) {

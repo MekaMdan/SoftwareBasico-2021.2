@@ -9,14 +9,14 @@
 #include <unordered_map>
 #include <stdio.h>
 
-// Classe nós que armazena os simbolos que serão inseridos na tabela de simbolos
+// Classe nós que armazena os simbolos que serao inseridos na tabela de simbolos
 class Node{
     std::string simbolo;
     int endereco;
     std::list <int> pendencia;
     std::string tipo; // Variavel ou label
     bool declarada;
-    int pos_declaração;
+    int pos_declaracao;
     int valor;
     // Node* next;
 public:
@@ -36,7 +36,7 @@ public:
     }
 
     void print(){
-        printf("%s está no endereço %d\n", simbolo.c_str() ,endereco);
+        printf("%s está no endereco %d\n", simbolo.c_str() ,endereco);
     }
     friend class TabelaDeSimbolos;
 };
@@ -45,7 +45,7 @@ public:
 class TabelaDeSimbolos{
     std::vector <Node*> nodes;
 public:
-    // Insere um novo elemento na tabela que não foi achado ainda
+    // Insere um novo elemento na tabela que nao foi achado ainda
     void inserir(std::string id){
         Node* novo = new Node;
         novo->simbolo = id;
@@ -92,7 +92,7 @@ public:
         nodes[pos]->endereco = endereco;
         nodes[pos]->tipo = "constante";
         nodes[pos]->valor = valor;
-        nodes[pos]->pos_declaração = posi;
+        nodes[pos]->pos_declaracao = posi;
         nodes[pos]->declarada = true;
     }
 
@@ -101,7 +101,7 @@ public:
         int i,p;
         for (i=0;i<tam;i++){
             if(nodes[i]->endereco==-1){
-                p = nodes[i]->pos_declaração;
+                p = nodes[i]->pos_declaracao;
                 nodes[i]->endereco = text+p;
             }
         }
@@ -112,7 +112,7 @@ public:
         return nodes[i]->valor;
     }
 
-    int retorna_endereço(std::string id){
+    int retorna_endereco(std::string id){
         int i = achar_id(id);
         return nodes[i]->endereco;
     }
@@ -123,7 +123,7 @@ public:
         nodes[pos]->tipo = "label";
         nodes[pos]->declarada = true;
         nodes[pos]->valor = 0;
-        nodes[pos]->pos_declaração = -1;
+        nodes[pos]->pos_declaracao = -1;
     }
 
     void inserir_variavel(std::string id, int endereco, int posi){
@@ -131,7 +131,7 @@ public:
         nodes[pos]->endereco = endereco;
         nodes[pos]->tipo = "variavel";
         nodes[pos]->declarada = true;
-        nodes[pos]->pos_declaração = posi;
+        nodes[pos]->pos_declaracao = posi;
         nodes[pos]->valor = 0;
     }
     
@@ -140,7 +140,7 @@ public:
         nodes[pos]-> pendencia.push_back(pendencia);
     }
 
-    // VERIFICA SE EXISTE ALGUMA VARIAVEL NÃO DECLARADA NA TABELA DE PENDENCIAS
+    // VERIFICA SE EXISTE ALGUMA VARIAVEL NaO DECLARADA NA TABELA DE PENDENCIAS
     bool verificaSimbDeclarados(){
         std::vector<Node*>::size_type tam = nodes.size();
         for(unsigned i=0; i<tam; i++){
@@ -179,7 +179,7 @@ public:
     int RetornaIdPorPos(int p){
         int tam = nodes.size();
         for(int i=0; i<tam; i++){
-            if(nodes[i]->pos_declaração == p){
+            if(nodes[i]->pos_declaracao == p){
                 return i;
             }
         }
@@ -196,7 +196,7 @@ public:
     void Mostra(){
         std::vector<Node*>::size_type tam = nodes.size();
         for(unsigned i=0; i<tam; i++){
-            printf("id:%s tipo:%s declarada?%d pos:%d valor: %d end: %d\n",nodes[i]->simbolo.c_str(), nodes[i]->tipo.c_str(), nodes[i]->declarada, nodes[i]->pos_declaração, nodes[i]->valor, nodes[i]->endereco);
+            printf("id:%s tipo:%s declarada?%d pos:%d valor: %d end: %d\n",nodes[i]->simbolo.c_str(), nodes[i]->tipo.c_str(), nodes[i]->declarada, nodes[i]->pos_declaracao, nodes[i]->valor, nodes[i]->endereco);
             MostraPendencia(i);
         }
     }
@@ -406,15 +406,15 @@ bool ChecaMais(std::string s){
     return false;
 }
   
-// Recebe argc e argc (padrão para receber entrada pela linha de comando)
+// Recebe argc e argc (padrao para receber entrada pela linha de comando)
 // argc: Contador de entradas
 // argv: Vetor de entradas
 int main(int argc, char* argv[]) {
-    // Lista que irá armazenar o valor de cada linha de endereço do programa na posição correspondente do vetor
-    // ex: 00 Add N1 -> v[0] = 01 (codigo add) v[1] = endereço N1
+    // Lista que irá armazenar o valor de cada linha de endereco do programa na posicao correspondente do vetor
+    // ex: 00 Add N1 -> v[0] = 01 (codigo add) v[1] = endereco N1
     std::vector <int> obj;
     std::string linha;    
-    // MAPA COM INSTRUÇÕES E VETOR QUE CONTEM OP CODE DA INSTRUÇÃO E NUMERO DE ENDEREÇO OCUPADOS
+    // MAPA COM INSTRUcÕES E VETOR QUE CONTEM OP CODE DA INSTRUcaO E NUMERO DE ENDEREcO OCUPADOS
     std::unordered_map <std::string, std::vector<int>> inst = {
         {"ADD",{1,2}},
         {"SUB",{2,2}},
@@ -434,12 +434,12 @@ int main(int argc, char* argv[]) {
 
     std::vector<std::string> diretivas_sec = {"SECTION DATA","SECTION TEXT"};
     std::vector<std::string> diretivas_var = {"CONST","SPACE"};
-    int atual = 1, endereco = 0; //linha do codigo, endereço da linha do codigo obj atual;
-    int tam, i; // tamanho do vetor, variavel de iteração
+    int atual = 1, endereco = 0; //linha do codigo, endereco da linha do codigo obj atual;
+    int tam, i; // tamanho do vetor, variavel de iteracao
 
 
     if(argc<2){
-        // Caso não passe nenhum nome de arquivo
+        // Caso nao passe nenhum nome de arquivo
         printf("fatal error: no input files\nmontador terminated.");
     }else{
         TabelaDeSimbolos TS; //Cria Tabela de simbolos
@@ -447,15 +447,15 @@ int main(int argc, char* argv[]) {
         std::ifstream Arquivo(argv[1]); 
 
         std::vector<std::string> vetorLinha; //Vetor que guarda os strings da linha
-        bool erro = false; // Desabilita a criação de arquivos objeto caso tenha erros
-        bool comentario; // indica se é comentario ou não
-        bool data = false;  //se está na seção de data ou não
+        bool erro = false; // Desabilita a criacao de arquivos objeto caso tenha erros
+        bool comentario; // indica se é comentario ou nao
+        bool data = false;  //se está na secao de data ou nao
         std::string comando = ""; // guarda o valor da 
         std::string direc = "";  // guarda valor de diretiva ou rotulo
         std::string tipo = "";  // guarda valor de diretiva ou rotulo
         std::string var = "";  // guarda valor de diretiva ou rotulo
         std::string aux;
-        int n_var = 0; // Recebe o numero de variaveis pela instrução
+        int n_var = 0; // Recebe o numero de variaveis pela instrucao
         int text = -1;
         int data_end = -1;
         bool stop = false;
@@ -534,7 +534,7 @@ int main(int argc, char* argv[]) {
                                         }
                                     }
                                     direc = "";
-                            }else{  // se for declaração de var ou const
+                            }else{  // se for declaracao de var ou const
                                 comando = "decl";
                                 var = direc;
                             }
@@ -547,7 +547,7 @@ int main(int argc, char* argv[]) {
                                     text +=n_var;
                                     n_var--;
                                     
-                                    obj.push_back(inst[vetorLinha[i]][0]); // Carrega no fim do vetor de codigo objeto o codigo da instrução
+                                    obj.push_back(inst[vetorLinha[i]][0]); // Carrega no fim do vetor de codigo objeto o codigo da instrucao
                                     if(vetorLinha[i]=="STOP"){
                                         stop = true;
                                     }
@@ -815,8 +815,8 @@ int main(int argc, char* argv[]) {
                     if(!TS.verifica_id(direc)){
                         TS.inserir(direc);
                     }
-                    if((TS.retorna_endereço(direc)> 0)&&(TS.verifica_id_decl(direc))){
-                        obj.push_back(TS.retorna_endereço(direc));
+                    if((TS.retorna_endereco(direc)> 0)&&(TS.verifica_id_decl(direc))){
+                        obj.push_back(TS.retorna_endereco(direc));
                     }else{
                         TS.adicionar_lista(direc, endereco);
                         obj.push_back(-1);
@@ -901,7 +901,7 @@ int main(int argc, char* argv[]) {
         ResolvePendencias(obj,TS);
         // Insere variaveis no vetor objeto
         InsereDecl(obj,pos,TS);
-        // Achar Variaveis não declaradas
+        // Achar Variaveis nao declaradas
         if(!TS.verificaSimbDeclarados()){
             if(!erro){
                 erro = true;
@@ -931,7 +931,7 @@ int main(int argc, char* argv[]) {
     
         
         
-        // FIM DA CRIAÇÃO DO NOME DO ARQUIVO OBJETO
+        // FIM DA CRIAcaO DO NOME DO ARQUIVO OBJETO
         
         Arquivo.close();
         TS.~TabelaDeSimbolos();
