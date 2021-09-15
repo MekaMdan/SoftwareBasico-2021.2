@@ -2,7 +2,7 @@
 #include <string.h>
 #include <vector>
 #include <fstream>
-
+#include <conio.h>
 
 void VetorInstrucao(std::vector <int> &v, std::string s){
     bool anterior = false;
@@ -153,6 +153,7 @@ void Execucao(std::string nome){
             arg1 = v[pc+1];
             arg2 = v[arg1];
             printf("OUTPUT:%d\n", arg2);
+            getch();
             pc += 2;
             break;
 
