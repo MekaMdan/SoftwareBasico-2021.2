@@ -15,7 +15,7 @@ input n1 ;oi
 input n2 ; a
 load n1 
 add n2
-store n1
+store n1 
 output n1
 stop
 SECTION DATA

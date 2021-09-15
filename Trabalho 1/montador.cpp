@@ -144,12 +144,12 @@ public:
     bool verificaSimbDeclarados(){
         std::vector<Node*>::size_type tam = nodes.size();
         for(unsigned i=0; i<tam; i++){
-            if(nodes[i]->declarada){
-                return true;
+            if(!nodes[i]->declarada){
+                return false;
             }
 
         }
-        return false;
+        return true;
         
     }
     
@@ -213,6 +213,14 @@ public:
            printf("\n"); 
         }
         
+    }
+
+    bool RetornaDecl(int i){
+        return(nodes[i]->declarada);
+    }
+
+    std::string RetornaSimbo(int i){
+        return (nodes[i]->simbolo);
     }
 
     ~TabelaDeSimbolos(){
@@ -355,6 +363,25 @@ void ResolvePendencias(std::vector <int> &v,TabelaDeSimbolos R){
     }
 }
 
+void VerificaTS(TabelaDeSimbolos T){
+    int tam = T.retornTam();
+    int i;
+    int qnt = 0;
+    printf("Erro Semantico: Rotulo(s) ");    
+    for (i=0;i<tam;i++){
+        if(!T.RetornaDecl(i)){
+            printf("%s ", T.RetornaSimbo(i).c_str());
+            qnt++;
+        }
+        
+    }
+    if(qnt==1){
+        printf("nao foi declarado\n");
+    }else{
+        printf("nao foram declarados\n");
+    }
+    
+}
 // Se a var/label possui apenas tokens aceitos, retorna true
 bool VerificaTokens(std::string s){
     if((!isdigit(s.front()))&&(!HasSpecialCharacters(s.c_str()))){
@@ -428,7 +455,7 @@ int main(int argc, char* argv[]) {
         std::string tipo = "";  // guarda valor de diretiva ou rotulo
         std::string var = "";  // guarda valor de diretiva ou rotulo
         std::string aux;
-        int n_var; // Recebe o numero de variaveis pela instrução
+        int n_var = 0; // Recebe o numero de variaveis pela instrução
         int text = -1;
         int data_end = -1;
         bool stop = false;
@@ -518,6 +545,7 @@ int main(int argc, char* argv[]) {
                                     
                                     n_var = inst[vetorLinha[i]][1]; // numero total de variaveis
                                     text +=n_var;
+                                    n_var--;
                                     
                                     obj.push_back(inst[vetorLinha[i]][0]); // Carrega no fim do vetor de codigo objeto o codigo da instrução
                                     if(vetorLinha[i]=="STOP"){
@@ -528,8 +556,7 @@ int main(int argc, char* argv[]) {
                                     }
                                 }else{
                                     if(comando=="var"){
-                                        if(n_var>0){
-                                            if((vetorLinha[i].back()==',')){
+                                            if(((vetorLinha[i].back()==',')||(vetorLinha[i].front()==','))){
                                                 if(vetorLinha[i]==","){ // se vetorLinha[i] for apenas ,
                                                     // direc já é a variavel
                                                     
@@ -540,16 +567,60 @@ int main(int argc, char* argv[]) {
                                                     obj.push_back(-1);
                                                     endereco++;
                                                     n_var--;
+                                                    direc = "";
                                                     // insere direc na tb e/ou insere na lista de pendencia
                                                 }else{  //senao é na forma [rotulo,]
                                                     // insere vetorLinha[i] no direc, remove o ultimo elemento do direc(seria a virgula)
+                                                    
+
+                                                    if((vetorLinha[i].front()==',')&&(direc!=" ")){
+                                                        if(!TS.verifica_id(direc)){
+                                                            TS.inserir(direc);
+                                                        }
+                                                        TS.adicionar_lista(direc, endereco);
+                                                        direc = "";
+                                                        obj.push_back(-1);
+                                                        endereco++;
+                                                        n_var--;
+                                                    }
+
                                                     direc += vetorLinha[i];
-                                                    direc.pop_back();
+                                                    
+                                                    if(vetorLinha[i].front()==','){
+                                                        direc.erase(0,1);
+                                                    }
+
+                                                    if(vetorLinha[i].back()==','){
+                                                        direc.pop_back();
+                                                        
+                                                    }
+                                                    
+                                                    if(ChecaComma(direc)){
+                                                        SeparaVar(hel, direc);
+                                                        int tm = hel.size();
+                                                        tm--;
+                                                        int j;
+                                                        for(j=0;j<tm;j++){
+                                                            direc = hel[j];
+                                                            if(!TS.verifica_id(direc)){
+                                                                TS.inserir(direc);
+                                                            }
+                                                            TS.adicionar_lista(direc, endereco);
+                                                            obj.push_back(-1);
+
+                                                            endereco++;
+                                                            n_var--;
+                                                        }
+                                                        EsvaziaVetor(hel);
+                                                        direc = hel[tm];
+                                                    }
+                                                    
+                                                    
                                                     if(!TS.verifica_id(direc)){
                                                         TS.inserir(direc);
                                                     }
                                                     TS.adicionar_lista(direc, endereco);
-
+                                                    direc = "";
                                                     obj.push_back(-1);
                                                     endereco++;
                                                     n_var--;
@@ -571,7 +642,7 @@ int main(int argc, char* argv[]) {
                                                         obj.push_back(-1);
 
                                                         endereco++;
-                                                        
+                                                        n_var--;
                                                     }
                                                     EsvaziaVetor(hel);
                                                     direc = hel[tm];
@@ -592,7 +663,7 @@ int main(int argc, char* argv[]) {
                                             
                                             
                                             
-                                        }
+                                        
                                     }else{
                                         if(((text == -1)&&(comando!= "decl"))||((stop==true)&&(data_end == -1))){
                                             direc+=vetorLinha[i];
@@ -738,6 +809,8 @@ int main(int argc, char* argv[]) {
             if(comando=="var"){
                 comando = "inst";
                 if(direc != ""){
+
+                    
                     //printf("%s", direc.c_str());
                     if(!TS.verifica_id(direc)){
                         TS.inserir(direc);
@@ -749,6 +822,7 @@ int main(int argc, char* argv[]) {
                         obj.push_back(-1);
                     }
                     endereco++;
+                    n_var--;
 
                     
                     
@@ -759,6 +833,13 @@ int main(int argc, char* argv[]) {
                 comando = "declarado";
             }
 
+            if(n_var!=0){
+                if(!erro){
+                    erro = true;
+                }
+                Printa(vetorLinha);
+                printf("Linha %d - Erro Sintatico: Instrucao com quantidade de operacoes errada\n",atual);
+            }
 
             if(comando=="direc"){
                 direc.pop_back();
@@ -803,6 +884,7 @@ int main(int argc, char* argv[]) {
                 }
             }
             tipo = "";
+            n_var = 0;
             var = "";
             direc = "";
             EsvaziaVetor(vetorLinha);
@@ -810,8 +892,6 @@ int main(int argc, char* argv[]) {
             atual++; 
             
         }
-
-        TS.Mostra();
 
         if(text>data_end){
             TS.altera_end(text);
@@ -822,7 +902,13 @@ int main(int argc, char* argv[]) {
         // Insere variaveis no vetor objeto
         InsereDecl(obj,pos,TS);
         // Achar Variaveis não declaradas
-
+        if(!TS.verificaSimbDeclarados()){
+            if(!erro){
+                erro = true;
+            }
+            VerificaTS(TS);
+            
+        }
 
         // Cria o nome do novo arquivo que será criado com o código objeto do programa
         if(!erro){
@@ -830,6 +916,15 @@ int main(int argc, char* argv[]) {
             std::string toReplace(".asm");
             size_t pos = nome.find(toReplace);
             nome.replace(pos, toReplace.length(), ".obj");
+
+            std::ofstream saida(nome);
+            int tm = obj.size();
+            int j; 
+            for(j=0;j<tm;j++){
+                saida << obj[j];
+                saida << " ";
+            }
+            saida.close();
         }  
         //printf("text: %d, data: %d\n", text, data_end);
         
@@ -837,9 +932,7 @@ int main(int argc, char* argv[]) {
         
         
         // FIM DA CRIAÇÃO DO NOME DO ARQUIVO OBJETO
-        PrintaOBJ(obj);
         Arquivo.close();
-        TS.Mostra();
         TS.~TabelaDeSimbolos();
          // Desaloca vetor da tabela de simbolos
     }
