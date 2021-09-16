@@ -10,20 +10,20 @@
 ; um: const 1
 ; res: space
 
-section rext
+SECTION text
 input n1 ;oi
 input n2 ; a
-load n1
-labela: 
+load n1 
 add n2
-labela:
 store n1
-output
+copy n1,n2 
+output n1
+output n2
 stop
-section data
-n1: space
+
+SECTION DATA
+n1: space 
 n2: space 
-LABEL: INST SAD
 ;if(vetorLinha[i]=="SECTION"){
 ;                            direc = vetorLinha[i];
 ;                            direc += ' ';
@@ -32,3 +32,18 @@ LABEL: INST SAD
 ;                                direc+=vetorLinha[i];
 ;                            }
 ;                        }
+;printf("%s ", vetorLinha[i].c_str());
+;                                    for (int i: inst.find(vetorLinha[i])->second ){
+;                                        printf("%d ", i);
+;                                    }
+;                                    printf("\n");
+
+;if(vetorLinha[i].back()==','){
+;                                                // Atribui a Direc a variavel contida no vetorLinha[i] (tirando a virgula do final) N1, -> N1
+;                                                vetorLinha[i].pop_back();
+;                                                direc = vetorLinha[i];
+;                                                vetorLinha[i].push_back(',');
+;                                            }else{
+;                                                if(vetorLinha[i]==","){
+;
+;                                                }
