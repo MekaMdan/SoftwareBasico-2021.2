@@ -22,5 +22,5 @@ output n2
 stop
 
 SECTION DATA
-n1 : const 2 
+n1 : space
 n2: space 
