@@ -296,6 +296,21 @@ void SeparaVar(std::vector<std::string>&v, std::string s){
     }
 }
 
+void SeparaLabel(std::vector<std::string>&v, std::string s){
+    std::string word;
+    for(auto x:s){
+        if(x==':'){
+            v.push_back(word);
+            word = "";
+        }else{
+            word = word + x;
+        }
+    }
+    if(word!=""){
+        v.push_back(word);
+    }
+}
+
 void EsvaziaVetor(std::vector<std::string> &v){
     while(!v.empty()){
         v.pop_back();
@@ -405,7 +420,15 @@ bool ChecaMais(std::string s){
     }
     return false;
 }
-  
+
+bool ChecaDoisPontos(std::string s){
+    char valor = ':';
+    if(strchr(s.c_str(),valor)!=NULL){
+        return true;
+    }
+    return false;
+}  
+
 // Recebe argc e argc (padrao para receber entrada pela linha de comando)
 // argc: Contador de entradas
 // argv: Vetor de entradas
@@ -480,15 +503,16 @@ int main(int argc, char* argv[]) {
                         comentario = true;
                         vetorLinha.erase(vetorLinha.begin() + i); // separa os comentarios do código
                     }else{
-                        if((vetorLinha[i].back() == ':' || vetorLinha[i]== ":" )&&(comando!="var")){
+                    if((vetorLinha[i].back() == ':' || vetorLinha[i]== ":" || vetorLinha[i].front()==':'||  ChecaDoisPontos(vetorLinha[i]) )&&(comando!="var")){
                             
                             // Se for na forma ROTULO: , remove os : para ter o rotulo
                             if((vetorLinha[i]!=":")&&(vetorLinha[i].back() == ':')){
-                                vetorLinha[i].pop_back();
                                 direc = vetorLinha[i]; // dirac recebe valor de variavel ou de label
-                                vetorLinha[i].push_back(':'); 
-                                
+                                direc.pop_back();
                             }
+                            
+
+                            
 
                             if(data == false){ // ser for label
                                 if(comando == "label"){
@@ -538,6 +562,8 @@ int main(int argc, char* argv[]) {
                                 comando = "decl";
                                 var = direc;
                             }
+
+
                         }else{
                                 if((inst.find(vetorLinha[i]) != inst.end())&&(comando!="invalido")){
                                     comando = "var";
@@ -784,11 +810,11 @@ int main(int argc, char* argv[]) {
                                                             
                                                         }
                                                     }
-                                                }
-                                            }else{
+                                                }else{
                                                     direc=vetorLinha[i];
                                                     comando = "naoidentificado";
                                                     }
+                                            }
 
                                             
                                         }

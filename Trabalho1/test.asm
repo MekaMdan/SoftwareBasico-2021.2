@@ -22,28 +22,5 @@ output n2
 stop
 
 SECTION DATA
-n1: space 
+n1 : const 2 
 n2: space 
-;if(vetorLinha[i]=="SECTION"){
-;                            direc = vetorLinha[i];
-;                            direc += ' ';
-;                        }else{
-;                            if(direc!=""){
-;                                direc+=vetorLinha[i];
-;                            }
-;                        }
-;printf("%s ", vetorLinha[i].c_str());
-;                                    for (int i: inst.find(vetorLinha[i])->second ){
-;                                        printf("%d ", i);
-;                                    }
-;                                    printf("\n");
-
-;if(vetorLinha[i].back()==','){
-;                                                // Atribui a Direc a variavel contida no vetorLinha[i] (tirando a virgula do final) N1, -> N1
-;                                                vetorLinha[i].pop_back();
-;                                                direc = vetorLinha[i];
-;                                                vetorLinha[i].push_back(',');
-;                                            }else{
-;                                                if(vetorLinha[i]==","){
-;
-;                                                }
