@@ -473,6 +473,8 @@ int main(int argc, char* argv[]) {
         bool erro = false; // Desabilita a criacao de arquivos objeto caso tenha erros
         bool comentario; // indica se é comentario ou nao
         bool data = false;  //se está na secao de data ou nao
+        bool frente = false;
+        bool meio = false;
         std::string comando = ""; // guarda o valor da 
         std::string direc = "";  // guarda valor de diretiva ou rotulo
         std::string tipo = "";  // guarda valor de diretiva ou rotulo
@@ -511,8 +513,16 @@ int main(int argc, char* argv[]) {
                                 direc.pop_back();
                             }
                             
+                            if((vetorLinha[i]!=":")&&(vetorLinha[i].front()!=':')&&(vetorLinha[i].back()!=':')&&(ChecaDoisPontos(vetorLinha[i]))){
+                                SeparaLabel(hel,vetorLinha[i]);
+                                direc = hel[0];
+                                meio = true;
 
+                            }
                             
+                            if((vetorLinha[i]!=":")&&(vetorLinha[i].front()==':')){
+                                frente = true;
+                            }
 
                             if(data == false){ // ser for label
                                 if(comando == "label"){
@@ -558,14 +568,112 @@ int main(int argc, char* argv[]) {
                                         }
                                     }
                                     direc = "";
+                                    if(meio||frente){
+                                        if(meio)
+                                            direc = hel[1];
+                                        if(frente){
+                                            direc = vetorLinha[i];
+                                            direc.erase(0,1);
+                                        }
+                                        
+                                        if((inst.find(direc) != inst.end())){
+                                            comando = "var";
+                                            endereco = text+1;
+
+                                            n_var = inst[direc][1];
+                                            text+=n_var;
+                                            n_var--;
+
+                                            obj.push_back(inst[direc][0]);
+                                            if(direc=="STOP"){
+                                                stop = true;
+                                            }
+                                            if(text==-1){
+                                                text=-2;
+                                            }
+                                        }else{
+                                            direc += hel[1];
+                                            comando = "naoidentificado";
+                                        }
+                                    }
                             }else{  // se for declaracao de var ou const
                                 comando = "decl";
-                                var = direc;
+                                if(frente||meio){
+                                    if(frente){
+                                        var = direc;
+                                        
+                                        tipo = vetorLinha[i];
+                                        tipo.erase(0,1);
+                                    }
+
+                                    if(meio){
+                                        var = hel[0];
+                                        tipo = hel[1];
+                                    }
+
+                                    if(VerificaDiretiva(diretivas_var,tipo)){
+                                        if(tipo=="SPACE"){
+                                            if(TS.verifica_id_decl(var)){
+                                                err_linhastr = "Linha ";
+                                                err_linhastr += std::to_string(atual);
+                                                err_linhastr += " - Erro Semantico: declaracao de rotulos repetidos";
+                                                if(!ContemErr(erros_linha, err_linhastr))
+                                                    erros_linha.push_back(err_linhastr);
+                                                err_linhastr = "";
+                                            }else{
+                                                    if(var.back()==' ')
+                                                        var.pop_back();
+                                                    if(VerificaTokens(var)){
+                                                        if(!TS.verifica_id(var)){
+                                                            TS.inserir(var);
+                                                        }
+                                                                    
+                                                        if(text<0){
+                                                            TS.inserir_variavel(var,-1,pos); 
+                                                        }else{
+                                                            TS.inserir_variavel(var,text+pos,pos); 
+                                                        }
+                                                        pos++;
+                                                    }else{
+                                                        err_linhastr = "Linha ";
+                                                        err_linhastr += std::to_string(atual);
+                                                        err_linhastr += " - Erro Lexico: Tokens invalidos";
+                                                        if(!ContemErr(erros_linha, err_linhastr))
+                                                            erros_linha.push_back(err_linhastr);
+                                                        err_linhastr = "";
+                                                    }
+                                            }
+                                        }
+                                    }else{
+                                        err_linhastr = "Linha ";
+                                        err_linhastr += std::to_string(atual);
+                                        err_linhastr += " - Erro Lexico: diretiva invalida";
+                                        if(!ContemErr(erros_linha, err_linhastr))
+                                            erros_linha.push_back(err_linhastr);
+                                        err_linhastr = "";           
+                                    }
+
+                                }else{
+                                    var = direc;
+                                }
+                                
+
+                            }
+
+                            if(meio){
+                                meio = false;
+                                EsvaziaVetor(hel);
+                                direc = "";
+                            }
+
+                            if(frente){
+                                frente = false;
+                                direc = "";
                             }
 
 
                         }else{
-                                if((inst.find(vetorLinha[i]) != inst.end())&&(comando!="invalido")){
+                                if((inst.find(vetorLinha[i]) != inst.end())&&(comando!="naoidentificado")){
                                     comando = "var";
                                     endereco = text+1;
                                     
@@ -581,7 +689,7 @@ int main(int argc, char* argv[]) {
                                         text=-2;
                                     }
                                 }else{
-                                    if(comando=="var"){
+                                        if(comando=="var"){
                                             if(((vetorLinha[i].back()==',')||(vetorLinha[i].front()==','))){
                                                 if(vetorLinha[i]==","){ // se vetorLinha[i] for apenas ,
                                                     // direc já é a variavel
@@ -599,7 +707,7 @@ int main(int argc, char* argv[]) {
                                                     // insere vetorLinha[i] no direc, remove o ultimo elemento do direc(seria a virgula)
                                                     
 
-                                                    if((vetorLinha[i].front()==',')&&(direc!=" ")){
+                                                    if((vetorLinha[i].front()==',')&&(direc!="")){
                                                         if(!TS.verifica_id(direc)){
                                                             TS.inserir(direc);
                                                         }
@@ -686,26 +794,68 @@ int main(int argc, char* argv[]) {
                                                     }
                                                 }
                                             }
+                                        }else{
+                                            if(((text == -1)&&(comando!= "decl"))||((stop==true)&&(data_end == -1))){
+                                                direc+=vetorLinha[i];
+                                                direc+=" ";
+                                                comando = "direc";
                                             
-                                            
-                                            
-                                        
-                                    }else{
-                                        if(((text == -1)&&(comando!= "decl"))||((stop==true)&&(data_end == -1))){
-                                            direc+=vetorLinha[i];
-                                            direc+=" ";
-                                            comando = "direc";
-                                            
-                                        }
-                                        else{
-                                            if(vetorLinha[i]!=""){
-                                                if((data==true)&&(comando == "decl")){
-                                                    direc = vetorLinha[i];
+                                            }else{
+                                                if(vetorLinha[i]!=""){
+                                                    if((data==true)&&(comando == "decl")){
+                                                        direc = vetorLinha[i];
                                                     //printf("a %s\n",vetorLinha[i].c_str());
-                                                    if(tipo == ""){
-                                                        if(VerificaDiretiva(diretivas_var,vetorLinha[i])){
-                                                            if(vetorLinha[i]=="SPACE"){
-                                                                tipo = "SPACE";
+                                                        if(tipo == ""){
+                                                            if(VerificaDiretiva(diretivas_var,vetorLinha[i])){
+                                                                if(vetorLinha[i]=="SPACE"){
+                                                                    tipo = "SPACE";
+                                                                    if(TS.verifica_id_decl(var)){
+                                                                        err_linhastr = "Linha ";
+                                                                        err_linhastr += std::to_string(atual);
+                                                                        err_linhastr += " - Erro Semantico: declaracao de rotulos repetidos";
+                                                                        if(!ContemErr(erros_linha, err_linhastr))
+                                                                            erros_linha.push_back(err_linhastr);
+                                                                        err_linhastr = "";
+                                                                    }else{
+                                                                        if(var.back()==' ')
+                                                                            var.pop_back();
+                                                                        if(VerificaTokens(var)){
+                                                                            if(!TS.verifica_id(var)){
+                                                                                TS.inserir(var);
+                                                                            }
+                                                                    
+                                                                            if(text<0){
+                                                                                TS.inserir_variavel(var,-1,pos); 
+                                                                            }else{
+                                                                                TS.inserir_variavel(var,text+pos,pos); 
+                                                                            }
+                                                                            pos++;
+                                                                        }else{
+                                                                            err_linhastr = "Linha ";
+                                                                            err_linhastr += std::to_string(atual);
+                                                                            err_linhastr += " - Erro Lexico: Tokens invalidos";
+                                                                            if(!ContemErr(erros_linha, err_linhastr))
+                                                                                erros_linha.push_back(err_linhastr);
+                                                                            err_linhastr = "";
+                                                                        }
+                                                                    }
+                                                            
+                                                                }else{
+                                                                    tipo = "CONST";
+                                                                }
+                                                            }else{
+                                                                err_linhastr = "Linha ";
+                                                                err_linhastr += std::to_string(atual);
+                                                                err_linhastr += " - Erro Lexico: diretiva invalida";
+                                                                if(!ContemErr(erros_linha, err_linhastr))
+                                                                    erros_linha.push_back(err_linhastr);
+                                                                err_linhastr = "";
+                                                            
+                                                            }
+                                                        }else{
+                                                            if(tipo== "CONST" ){
+                                                            
+                                                                int d = std::stoi(vetorLinha[i]);
                                                                 if(TS.verifica_id_decl(var)){
                                                                     err_linhastr = "Linha ";
                                                                     err_linhastr += std::to_string(atual);
@@ -720,53 +870,6 @@ int main(int argc, char* argv[]) {
                                                                         if(!TS.verifica_id(var)){
                                                                             TS.inserir(var);
                                                                         }
-                                                                    
-                                                                        if(text<0){
-                                                                            TS.inserir_variavel(var,-1,pos); 
-                                                                        }else{
-                                                                            TS.inserir_variavel(var,text+pos,pos); 
-                                                                        }
-                                                                        pos++;
-                                                                    }else{
-                                                                        err_linhastr = "Linha ";
-                                                                        err_linhastr += std::to_string(atual);
-                                                                        err_linhastr += " - Erro Lexico: Tokens invalidos";
-                                                                        if(!ContemErr(erros_linha, err_linhastr))
-                                                                            erros_linha.push_back(err_linhastr);
-                                                                        err_linhastr = "";
-                                                                    }
-                                                                }
-                                                            
-                                                            }else{
-                                                                tipo = "CONST";
-                                                            }
-                                                        }else{
-                                                            err_linhastr = "Linha ";
-                                                            err_linhastr += std::to_string(atual);
-                                                            err_linhastr += " - Erro Lexico: diretiva invalida";
-                                                            if(!ContemErr(erros_linha, err_linhastr))
-                                                                erros_linha.push_back(err_linhastr);
-                                                            err_linhastr = "";
-                                                            
-                                                        }
-                                                    }else{
-                                                        if(tipo== "CONST" ){
-                                                            
-                                                            int d = std::stoi(vetorLinha[i]);
-                                                            if(TS.verifica_id_decl(var)){
-                                                                err_linhastr = "Linha ";
-                                                                err_linhastr += std::to_string(atual);
-                                                                err_linhastr += " - Erro Semantico: declaracao de rotulos repetidos";
-                                                                if(!ContemErr(erros_linha, err_linhastr))
-                                                                    erros_linha.push_back(err_linhastr);
-                                                                err_linhastr = "";
-                                                            }else{
-                                                                if(var.back()==' ')
-                                                                    var.pop_back();
-                                                                if(VerificaTokens(var)){
-                                                                    if(!TS.verifica_id(var)){
-                                                                        TS.inserir(var);
-                                                                    }
                                                                     
                                                                     if(text<0){
                                                                        TS.inserir_constante(var,-1,d,pos); 
@@ -922,7 +1025,8 @@ int main(int argc, char* argv[]) {
         if(text>data_end){
             TS.altera_end(text);
         }
-
+        
+        TS.Mostra();
         // Resolve Pendencias
         ResolvePendencias(obj,TS);
         // Insere variaveis no vetor objeto
