@@ -109,11 +109,25 @@ void VetorInt(std::vector <int> &v, std::string l){
     }
 }
 
-void Remove(int &p, int &v, int &endereco){
-    while((p>0)&&(v>0)){
-        v--;
-        p--;
-        endereco++;
+void Remove(int &p, int &v, int &endereco,int &usado){
+    if(v>p){
+        usado = p;
+        endereco+=p;
+        v -= p;
+        p = 0;
+    }else{
+        if(v<p){
+            usado = v;
+            endereco+=v;
+            p -= v;
+            v = 0;
+        }else{
+            usado = v;
+            endereco+=v;
+            v = 0;
+            p = 0;
+
+        }
     }
 }
 
@@ -136,6 +150,32 @@ void EsvaziaInt(std::vector<int> &v){
     }
 }
 
+void ResolvePendencias(std::vector<int> pendencias, std::vector<int> &enderecos){
+    int pos_pendencia; // valor que a pendencia esta
+    int aux,i,x;
+    int tam = pendencias.size();
+    for(i=0;i<tam;i++){
+        pos_pendencia = pendencias[i];
+
+        aux = enderecos[pos_pendencia];
+
+        x = enderecos[aux];
+
+        enderecos[pos_pendencia] = x;
+        /*
+        printf("endereco: %d\n",enderecos[x]);
+        pos_pendencia = instru[x];
+        aux = enderecos[pos_pendencia];
+        printf("aux: %d\n",aux);
+        enderecos[x] = aux;
+        printf("endereco novo: %d\n",enderecos[x]);
+        */
+
+    }
+
+
+}
+
 int main(int argc, char* argv[]) {
     std::string end = ".obj";
     int i = 1;
@@ -152,7 +192,9 @@ int main(int argc, char* argv[]) {
         bool isAddress = false;
         bool Allocated = false;
         bool Deu = false;
-        int aux, j, k, Fsize, Tamsize, initial, fin, Tamsi;
+        bool stop = false;
+        int aux, j, k, Fsize, Tamsize, initial, fin, Tamsi, itEnd, pos;
+        int itInst, endereco,usado;
         //std::vector <std::string> vs;
         std::string linha;
         std::vector <std::string> v;
@@ -163,6 +205,14 @@ int main(int argc, char* argv[]) {
         std::vector <int> machinecode;
         std::vector <int> firstadress;
         std::vector <int> adresssizeof;
+        std::string file_saida;
+        std::string toReplace(".obj");
+        size_t where;
+        //
+        std::vector <int> saida;
+        std::vector <int> saida_end;
+        std::vector <int> pendencia;
+        std::vector <int> instru;
 
         // Leitura e separação da entrada
         while(i<argc){
@@ -234,10 +284,13 @@ int main(int argc, char* argv[]) {
             for(j=0;j<Tamsize;j++){
                 if((tam[j]>=SizeOf)&&(!Allocated)){
                     Allocated = true;
-                    adresssizeof.push_back(tam[j]);
+                    usado = SizeOf + 1;
+                    adresssizeof.push_back(usado);
                     firstadress.push_back(address[j]);
+                    usado = SizeOf + 1;
                     tam[j] = tam[j] - SizeOf;
                     address[j] += SizeOf;
+
                 }
             }
 
@@ -248,19 +301,19 @@ int main(int argc, char* argv[]) {
                         if(((j+k)>=SizeOf)&&(!Allocated)){
                             Allocated = true;
                             aux = SizeOf;
-                            adresssizeof.push_back(tam[j]);
-                            adresssizeof.push_back(tam[k]);
                             firstadress.push_back(address[j]);
                             firstadress.push_back(address[k]);
-                            Remove(aux,tam[j],address[j]);
-                            Remove(aux,tam[k], address[k]);
+                            Remove(aux,tam[j],address[j],usado);
+                            adresssizeof.push_back(usado);
+                            Remove(aux,tam[k], address[k], usado);
+                            adresssizeof.push_back(usado);
                         }
                     }
                 }
             }
 
             // mais de dois
-            if((!Allocated)&&(Tamsize>2)){
+            if((!Allocated)&&(Tamsize>1)){
                 aux = SizeOf;
                 j = 0;
                 initial = 0;
@@ -277,35 +330,125 @@ int main(int argc, char* argv[]) {
             }
 
             if(Deu){
-                aux = SizeOf;
+                aux = SizeOf+1;
                 for(j=initial;j<=fin;j++){
-                    adresssizeof.push_back(tam[j]);
                     firstadress.push_back(address[j]);
-                    Remove(aux,tam[j],address[j]);
+                    Remove(aux,tam[j],address[j],usado);
+                    adresssizeof.push_back(usado);
+                    printf("usado: %d  ",usado);
                 }
             }
 
             if(Allocated){
-                printf("Alocado:");
-                PrintaVetorInt(adresssizeof);
-                printf("\n");
-                printf("tam: ");
-                PrintaVetorInt(tam);
-                printf("primeiro endereco: ");
+                printf("%s utilizando ", name.c_str());
+                if(firstadress.size()>1){
+                    printf("%d CHUNKS. Enderecos iniciais: ",firstadress.size());
+                }else{
+                    printf("%d CHUNK. Endereco inicial: ",firstadress.size());
+                }
+                
                 PrintaVetorInt(firstadress);
+
+                // Criação da string de saida
+                j = adresssizeof.size();
+                pos = 0; // posicao no vetor com codigo de maquina
+                itEnd = 0;
+                itInst = 0;
+                for(k=0;k<j;k++){
+                    aux = adresssizeof[k];
+                    endereco = firstadress[k]; // iterador para endereco
+                    while(aux>0){
+                        if(itEnd>0){
+                            pendencia.push_back(pos);
+                            saida_end.push_back(machinecode[pos]);
+                            endereco++;
+                            pos++;
+                            itEnd--; 
+                            aux--;
+                        }else{
+                            itEnd = 0;
+                            if(stop){
+                                instru.push_back(machinecode[pos]);
+                                saida_end.push_back(endereco);
+                                pos++;
+                                endereco++;
+                                aux--;
+                            }else{
+                                instru.push_back(machinecode[pos]);
+                                saida_end.push_back(endereco);
+                                endereco++;
+                                itInst = machinecode[pos];
+                                pos++;
+                                aux--;
+                                if(itInst==14){
+                                    stop = true;
+                                }else{
+                                    if(itInst==9){
+                                        itEnd++;
+                                    }
+                                    itEnd++;
+                                }
+                            }
+                        }
+                       
+                    }
+                }
+
+            stop = false;
+            ResolvePendencias(pendencia, saida_end);
+            file_saida = NameFile;
+            where = file_saida.find(toReplace);
+            file_saida.replace(where,toReplace.length(),".saida");
+            std::ofstream gera(file_saida);
+
+            j=0; //posicao 
+            pos=0; //posisao no vetor saida_end
+            k = instru.size();
+            for(j=0;j<k;j++){
+                if(stop){
+                    gera << saida_end[pos];
+                    pos++;
+                    gera << " ";
+                    gera << instru[j];
+                }else{
+                    gera << saida_end[pos];
+                    pos++;
+                    gera << " ";
+                    gera << instru[j];
+                    if(instru[j]==14){
+                        stop = true;
+                    }else{
+                        gera << " ";
+                        gera << saida_end[pos];
+                        pos++;
+                        if(instru[j]==9){
+                            gera << " ";
+                            gera << saida_end[pos];
+                            pos++;
+                        }
+                    }
+                }
+                gera << "\n";
             }
-            PrintaVetorInt(address);
-            EsvaziaInt(adresssizeof);
-            EsvaziaInt(firstadress);
-            EsvaziaInt(info);
-            EsvaziaInt(machinecode);
+
+
+            EsvaziaInt(pendencia);
+            EsvaziaInt(instru);
+            EsvaziaInt(saida_end);
             
+            }
+
 
             if(!Allocated){
                 printf("%s NAO FOI POSSIVEL ALOCAR\n", name.c_str());
             }
             Allocated = false;
             Deu = false;
+            stop = false;
+            EsvaziaInt(adresssizeof);
+            EsvaziaInt(firstadress);
+            EsvaziaInt(info);
+            EsvaziaInt(machinecode);
         }
         /*
         printf("chunck: %d\n", chunks);
