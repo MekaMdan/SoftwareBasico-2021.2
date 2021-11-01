@@ -1086,13 +1086,13 @@ int main(int argc, char* argv[]) {
                     //printf("%s \n", prog.c_str());
                     std::ofstream saida(nome);
                     int j;
-                    saida << "H:";
+                    saida << "H: ";
                     saida << prog;
                     saida << "\n";
-                    saida << "H:";
+                    saida << "H: ";
                     saida << endereco;
                     saida << "\n";
-                    saida << "H:";
+                    saida << "H: ";
                     if(!Info){
                         // imprimir lista de enderecos
                         int tm = addresslist.size();
@@ -1109,7 +1109,7 @@ int main(int argc, char* argv[]) {
                         }
                     }
                     saida << "\n";
-                    saida << "T:";
+                    saida << "T: ";
                     int tm = obj.size();
                     for(j=0;j<tm;j++){
                         saida << obj[j];
